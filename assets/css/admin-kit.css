@@ -1,0 +1,37 @@
+#custom_discount_kit_products {
+    display: block !important;
+    width: 100% !important;
+    clear: both !important;
+    float: none !important;
+    margin: 20px 0 !important;
+}
+
+#custom_discount_kit_products .inside {
+    padding: 15px;
+}
+
+.kit-products-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.kit-products-list th,
+.kit-products-list td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.kit-products-list th {
+    background: #f8f8f8;
+    font-weight: 600;
+}
+
+.kit-products-list tr:hover {
+    background: #f9f9f9;
+}
+
+.kit-products-list input[type="number"] {
+    width: 60px !important;
+    text-align: center;
+}

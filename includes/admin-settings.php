@@ -19,10 +19,7 @@ function custom_discount_settings_menu() {
 function custom_discount_settings_page() {
     if (!current_user_can('manage_options')) return;
 
-    // Processa o formulário quando enviado
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['custom_discount_save'])) {
-        check_admin_referer('custom_discount_settings');
-
+    if (isset($_POST['custom_discount_save'])) {
         // Processa os níveis de desconto
         $discount_levels = array();
         if (isset($_POST['discount_level_quantity']) && isset($_POST['discount_level_percentage'])) {
@@ -38,43 +35,41 @@ function custom_discount_settings_page() {
                 }
             }
 
+            // Ordena os níveis por quantidade
             usort($discount_levels, function($a, $b) {
                 return $a['quantity'] - $b['quantity'];
             });
-
-            update_option('custom_discount_levels', $discount_levels);
         }
 
-        // Valor máximo de desconto
-        $max_discount = !empty($_POST['custom_discount_max']) ? floatval($_POST['custom_discount_max']) : 0;
-        update_option('custom_discount_max', $max_discount);
-
-        // Salva as categorias incluídas
-        $included_categories = isset($_POST['included_categories']) ? array_map('sanitize_text_field', $_POST['included_categories']) : array();
-        update_option('custom_discount_included_categories', $included_categories);
-
-        // Salva as mensagens personalizadas
-        $messages = array(
-            'has_discount' => wp_kses_post($_POST['custom_discount_messages_has_discount']),
-            'has_next_level' => wp_kses_post($_POST['custom_discount_messages_has_next_level']),
-            'no_discount' => wp_kses_post($_POST['custom_discount_messages_no_discount'])
-        );
-        update_option('custom_discount_messages', $messages);
-
+        // Salva as configurações
+        update_option('custom_discount_included_categories', isset($_POST['included_categories']) ? $_POST['included_categories'] : array());
+        update_option('custom_discount_levels', $discount_levels);
+        update_option('custom_discount_max', isset($_POST['custom_discount_max']) ? floatval($_POST['custom_discount_max']) : 0);
+        update_option('custom_discount_messages', array(
+            'has_discount' => sanitize_text_field($_POST['message_has_discount']),
+            'has_next_level' => sanitize_text_field($_POST['message_has_next_level']),
+            'no_discount' => sanitize_text_field($_POST['message_no_discount']),
+            'kit_discount' => sanitize_text_field($_POST['message_kit_discount']),
+            'kit_no_cart_match' => sanitize_text_field($_POST['message_kit_no_cart_match']),
+            'kit_complete' => sanitize_text_field($_POST['message_kit_complete'])
+        ));
         echo '<div class="updated"><p>Configurações salvas com sucesso!</p></div>';
     }
 
     // Recupera as configurações salvas
+    $included_categories = get_option('custom_discount_included_categories', array());
     $discount_levels = get_option('custom_discount_levels', array(
         array('quantity' => 6, 'percentage' => 10),
         array('quantity' => 10, 'percentage' => 15)
     ));
     $max_discount = get_option('custom_discount_max', 0);
-    $included_categories = get_option('custom_discount_included_categories', array());
     $messages = get_option('custom_discount_messages', array(
-        'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho!',
-        'has_next_level' => 'Adicione mais {remaining} produtos para aumentar seu desconto para {next_discount}% e economizar mais R$ {savings}!',
-        'no_discount' => 'Adicione {remaining} produtos ao carrinho para ganhar {next_discount}% de desconto e economizar R$ {savings}!'
+        'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
+        'has_next_level' => 'Adicione mais {remaining} produtos para aumentar seu desconto para {next_discount}% e economizar mais R$ {savings}! Compras mínimas de {level_quantity} itens.',
+        'no_discount' => 'Adicione {remaining} produtos ao carrinho para ganhar {next_discount}% de desconto e economizar R$ {savings}! Compras mínimas de {level_quantity} itens.',
+        'kit_discount' => 'Este kit já tem um desconto especial de {discount}%, aproveite!',
+        'kit_no_cart_match' => 'Você tem {cart_quantity} de {total_quantity} produtos deste kit no carrinho.',
+        'kit_complete' => 'Parabéns! Você tem {cart_quantity} produtos de {total_quantity} deste kit no carrinho e ganhou o desconto de {discount}%.'
     ));
 
     // Obtém todas as categorias do WooCommerce
@@ -92,32 +87,53 @@ function custom_discount_settings_page() {
         }
         .tab-content {
             display: none;
-            background: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
         }
         .tab-content.active {
             display: block;
         }
         .discount-level {
-            background: #f9f9f9;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
-        .add-level-button {
-            margin: 10px 0 20px;
+        .discount-level input[type="number"] {
+            width: 100px;
         }
         .remove-level {
-            color: #dc3232;
-            cursor: pointer;
-            margin-left: auto;
+            background: #dc3545;
+            color: white;
+            border: none;
             padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #add-level {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .variables-description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .variables-description ul {
+            margin: 10px 0;
+            list-style-type: none;
+        }
+        .variables-description li {
+            margin: 5px 0;
+        }
+        .variables-description code {
+            background: #e9ecef;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
         .categories-grid {
             display: grid;
@@ -130,13 +146,6 @@ function custom_discount_settings_page() {
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
-        }
-        .discount-level input[type="number"] {
-            width: 100px;
-        }
-        .discount-level label {
-            min-width: 150px;
-            display: inline-block;
         }
         .message-variables {
             background: #f5f5f5;
@@ -189,102 +198,123 @@ function custom_discount_settings_page() {
             <?php wp_nonce_field('custom_discount_settings'); ?>
 
             <div id="tab-levels" class="tab-content active">
-                <div id="discount-levels">
-                    <?php foreach ($discount_levels as $index => $level): ?>
-                    <div class="discount-level">
-                        <label><?php _e('Quantidade de Produtos:', 'desconto-automatico'); ?></label>
-                        <input type="number"
-                               name="discount_level_quantity[]"
-                               value="<?php echo esc_attr($level['quantity']); ?>"
-                               min="1"
-                               required />
-
-                        <label><?php _e('Porcentagem de Desconto:', 'desconto-automatico'); ?></label>
-                        <input type="number"
-                               name="discount_level_percentage[]"
-                               value="<?php echo esc_attr($level['percentage']); ?>"
-                               min="0"
-                               max="100"
-                               step="0.1"
-                               required />%
-
-                        <span class="remove-level" title="Remover nível">×</span>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <button type="button" class="button add-level-button"><?php _e('Adicionar Nível', 'desconto-automatico'); ?></button>
-
+                <h3>Níveis de Desconto</h3>
                 <table class="form-table">
                     <tr>
-                        <th><?php _e('Valor Máximo de Desconto (R$)', 'desconto-automatico'); ?></th>
+                        <th>Níveis</th>
+                        <td>
+                            <div id="discount-levels">
+                                <?php foreach ($discount_levels as $level): ?>
+                                <div class="discount-level">
+                                    <input type="number" name="discount_level_quantity[]" value="<?php echo esc_attr($level['quantity']); ?>" min="1" placeholder="Quantidade" />
+                                    <input type="number" name="discount_level_percentage[]" value="<?php echo esc_attr($level['percentage']); ?>" min="0" max="100" step="0.1" placeholder="Porcentagem" />
+                                    <button type="button" class="remove-level">Remover</button>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" id="add-level">Adicionar Nível</button>
+                            <p class="description">Configure os níveis de desconto baseados na quantidade de produtos.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Valor Máximo de Desconto (R$)</th>
                         <td>
                             <input type="number" name="custom_discount_max" value="<?php echo esc_attr($max_discount); ?>" min="0" step="0.01" />
-                            <p class="description"><?php _e('Digite 0 para não ter limite', 'desconto-automatico'); ?></p>
+                            <p class="description">Digite 0 para não ter limite no valor do desconto</p>
                         </td>
                     </tr>
                 </table>
             </div>
 
             <div id="tab-messages" class="tab-content">
-                <div class="message-box">
-                    <h3>Mensagem quando já tem desconto</h3>
-                    <p class="description">Esta mensagem é exibida quando o cliente já atingiu um nível de desconto.</p>
-                    <p class="variables-list">
-                        Variáveis disponíveis:
-                        <code>{discount}</code> - Porcentagem de desconto atual
-                        <code>{current_items}</code> - Quantidade atual de itens no carrinho
-                        <code>{savings}</code> - Valor em reais que está sendo economizado no momento
-                    </p>
-                    <?php
-                    wp_editor(
-                        $messages['has_discount'],
-                        'custom_discount_messages_has_discount',
-                        array('textarea_rows' => 3)
-                    );
-                    ?>
+                <h3>Variáveis Disponíveis para Todas as Mensagens</h3>
+                <div class="variables-description">
+                    <p>Você pode usar qualquer uma dessas variáveis em qualquer mensagem:</p>
+                    <ul>
+                        <li><code>{discount}</code> - Porcentagem de desconto atual</li>
+                        <li><code>{next_discount}</code> - Porcentagem do próximo nível de desconto</li>
+                        <li><code>{remaining}</code> - Quantidade de produtos que faltam</li>
+                        <li><code>{savings}</code> - Valor da economia em reais</li>
+                        <li><code>{cart_quantity}</code> - Quantidade de produtos no carrinho</li>
+                        <li><code>{total_quantity}</code> - Quantidade total de produtos no kit</li>
+                        <li><code>{level_quantity}</code> - Quantidade mínima de produtos para o nível atual</li>
+                    </ul>
                 </div>
 
-                <div class="message-box">
-                    <h3>Mensagem quando existe próximo nível</h3>
-                    <p class="description">Esta mensagem é exibida quando o cliente já tem um desconto, mas pode aumentar para o próximo nível.</p>
-                    <p class="variables-list">
-                        Variáveis disponíveis:
-                        <code>{remaining}</code> - Quantidade de produtos que faltam
-                        <code>{next_discount}</code> - Porcentagem do próximo nível de desconto
-                        <code>{level_quantity}</code> - Quantidade de produtos necessária para este nível
-                        <code>{savings}</code> - Valor adicional em reais que será economizado
-                        <code>{total_savings}</code> - Valor total em reais que será economizado
-                        <code>{current_items}</code> - Quantidade atual de itens no carrinho
-                    </p>
-                    <?php
-                    wp_editor(
-                        $messages['has_next_level'],
-                        'custom_discount_messages_has_next_level',
-                        array('textarea_rows' => 3)
-                    );
-                    ?>
-                </div>
-
-                <div class="message-box">
-                    <h3>Mensagem quando não tem desconto</h3>
-                    <p class="description">Esta mensagem é exibida quando o cliente ainda não atingiu nenhum nível de desconto.</p>
-                    <p class="variables-list">
-                        Variáveis disponíveis:
-                        <code>{remaining}</code> - Quantidade de produtos que faltam
-                        <code>{next_discount}</code> - Porcentagem do próximo nível de desconto
-                        <code>{level_quantity}</code> - Quantidade de produtos necessária para este nível
-                        <code>{savings}</code> - Valor em reais que será economizado
-                        <code>{current_items}</code> - Quantidade atual de itens no carrinho
-                    </p>
-                    <?php
-                    wp_editor(
-                        $messages['no_discount'],
-                        'custom_discount_messages_no_discount',
-                        array('textarea_rows' => 3)
-                    );
-                    ?>
-                </div>
+                <table class="form-table">
+                    <tr>
+                        <th>Mensagem quando tem desconto</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['has_discount'],
+                                'message_has_discount',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Mensagem quando tem próximo nível</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['has_next_level'],
+                                'message_has_next_level',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Mensagem quando não tem desconto</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['no_discount'],
+                                'message_no_discount',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Mensagem para kits</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['kit_discount'],
+                                'message_kit_discount',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Mensagem quando quantidade no carrinho é diferente</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['kit_no_cart_match'],
+                                'message_kit_no_cart_match',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Mensagem quando kit está completo</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['kit_complete'],
+                                'message_kit_complete',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <div id="tab-categories" class="tab-content">
@@ -313,64 +343,35 @@ function custom_discount_settings_page() {
 
     <script>
     jQuery(document).ready(function($) {
-        // Sistema de abas
+        // Tabs
         $('.nav-tab').on('click', function(e) {
             e.preventDefault();
-            var targetTab = $(this).attr('href');
-            
-            // Atualiza as abas
             $('.nav-tab').removeClass('nav-tab-active');
             $(this).addClass('nav-tab-active');
             
-            // Atualiza o conteúdo
             $('.tab-content').removeClass('active');
-            $(targetTab).addClass('active');
+            $($(this).attr('href')).addClass('active');
         });
 
-        // Template para novo nível de desconto
+        // Função para template do novo nível
         function getNewLevelTemplate() {
             return `
                 <div class="discount-level">
-                    <label><?php _e('Quantidade de Produtos:', 'desconto-automatico'); ?></label>
-                    <input type="number"
-                           name="discount_level_quantity[]"
-                           value=""
-                           min="1"
-                           required />
-
-                    <label><?php _e('Porcentagem de Desconto:', 'desconto-automatico'); ?></label>
-                    <input type="number"
-                           name="discount_level_percentage[]"
-                           value=""
-                           min="0"
-                           max="100"
-                           step="0.1"
-                           required />%
-
-                    <span class="remove-level" title="Remover nível">×</span>
+                    <input type="number" name="discount_level_quantity[]" value="" min="1" placeholder="Quantidade" />
+                    <input type="number" name="discount_level_percentage[]" value="" min="0" max="100" step="0.1" placeholder="Porcentagem" />
+                    <button type="button" class="remove-level">Remover</button>
                 </div>
             `;
         }
 
         // Adicionar novo nível
-        $('.add-level-button').on('click', function() {
+        $('#add-level').on('click', function() {
             $('#discount-levels').append(getNewLevelTemplate());
         });
 
         // Remover nível
         $(document).on('click', '.remove-level', function() {
             $(this).closest('.discount-level').remove();
-        });
-
-        // Validação do formulário
-        $('#discount-settings-form').on('submit', function(e) {
-            const levels = $('.discount-level');
-            if (levels.length === 0) {
-                e.preventDefault();
-                alert('Adicione pelo menos um nível de desconto.');
-                return false;
-            }
-            return true;
         });
     });
     </script>

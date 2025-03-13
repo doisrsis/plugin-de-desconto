@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Desconto Automático
- * Plugin URI:  https://pluralweb.biz/
- * Description: Plugin para aplicar descontos automáticos no WooCommerce baseado na quantidade de itens no carrinho.
- * Version:     1.1
- * Author:      PluralWeb
- * Author URI:  https://pluralweb.biz/
+ * Plugin Name: Custom Discount
+ * Plugin URI: https://spielmann.com.br
+ * Description: Plugin personalizado para aplicar descontos progressivos baseados na quantidade de produtos no carrinho.
+ * Version: 2.0
+ * Author: Spielmann
+ * Author URI: https://spielmann.com.br
  * Text Domain: desconto-automatico
  * Domain Path: /languages
  */
@@ -23,6 +23,7 @@ require_once DESCONTO_AUTOMATICO_PATH . 'includes/admin-settings.php';
 require_once DESCONTO_AUTOMATICO_PATH . 'includes/discount-functions.php';
 require_once DESCONTO_AUTOMATICO_PATH . 'includes/frontend-display.php';
 require_once DESCONTO_AUTOMATICO_PATH . 'includes/coupon-management.php';
+require_once DESCONTO_AUTOMATICO_PATH . 'includes/kit-functions.php';
 
 // Verificação de compatibilidade com WooCommerce
 function check_woocommerce_compatibility() {
@@ -76,3 +77,16 @@ function desconto_automatico_deactivate() {
     delete_option('custom_discount_max');
 }
 register_deactivation_hook(__FILE__, 'desconto_automatico_deactivate');
+
+// Registra os scripts e estilos
+function register_custom_discount_assets() {
+    wp_register_style('custom-discount-style', plugins_url('assets/css/custom-discount.css', __FILE__));
+    wp_register_script('custom-discount-script', plugins_url('assets/js/custom-discount.js', __FILE__), array('jquery'), '1.0', true);
+    
+    // Registra o CSS do admin para kits
+    if (is_admin() && get_post_type() === 'product') {
+        wp_enqueue_style('custom-discount-admin-kit', plugins_url('assets/css/admin-kit.css', __FILE__));
+    }
+}
+add_action('wp_enqueue_scripts', 'register_custom_discount_assets');
+add_action('admin_enqueue_scripts', 'register_custom_discount_assets');
