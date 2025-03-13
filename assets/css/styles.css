@@ -1,0 +1,72 @@
+.discount-progress-message {
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.discount-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #ff9800;
+    color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    display: none;
+    animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.custom-discount-message {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 15px;
+    font-size: 16px;
+    text-align: center;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+/*Isso deixará a mensagem em destaque logo abaixo da notificação padrão.*/
+.custom-discount-notice {
+    margin-left: 5px; /* Adiciona um pequeno espaço entre a mensagem e o texto padrão */
+    display: inline-block;
+    font-size: 16px;
+    color: #fff;
+}
+/*Isso deixará a mensagem destaque, sem ser intrusiva.*/
+/*.custom-product-discount-message {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 12px;
+    font-size: 16px;
+    text-align: center;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: #007cba;
+}*/
+.custom-product-discount-message {
+    background: #fff3cd; /* Cor de fundo amarela (warning) */
+    border-left: 5px solid #ffc107; /* Borda lateral amarela escura */
+    padding: 12px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #856404; /* Cor do texto escura para contraste */
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+

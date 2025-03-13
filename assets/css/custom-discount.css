@@ -1,0 +1,79 @@
+.custom-product-discount-message {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    border-left: 4px solid #BD9E5E;
+}
+
+.custom-discount-savings {
+    color: #BD9E5E;
+    font-weight: bold;
+}
+
+/* Estilos para as notificações toast */
+.custom-discount-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 999999;
+    min-width: 250px;
+    max-width: 350px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    border-left: 4px solid #BD9E5E;
+}
+
+.custom-discount-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.custom-discount-toast-content {
+    margin-right: 20px;
+    line-height: 1.4;
+}
+
+.custom-discount-toast-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.custom-discount-toast-close:hover {
+    color: #333;
+}
+
+/* Variações de toast */
+.custom-discount-toast-success {
+    border-left-color: #BD9E5E;
+}
+
+.custom-discount-toast-info {
+    border-left-color: #3498db;
+}
+
+.custom-discount-toast-warning {
+    border-left-color: #f1c40f;
+}
+
+.custom-discount-toast-error {
+    border-left-color: #e74c3c;
+}
