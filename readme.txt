@@ -1,9 +1,9 @@
 === Custom Discount ===
-Contributors: spielmann
+Contributors: Pluralweb
 Tags: woocommerce, discount, kit, progressive discount
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.1
+Stable tag: 2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,14 @@ Características:
 3. Configure o desconto em WooCommerce > Configurações > Custom Discount
 
 == Changelog ==
+
+= 2.2 =
+* Removida seção duplicada "Produtos do Kit" na página de cadastro de produtos
+* Removido campo "Mensagem quando tem próximo nível" na interface de administração
+* Adicionadas legendas explicativas para cada mensagem
+* Adicionada variável {admin_discount} na documentação
+* Atualização da marca para Pluralweb
+* Correções de bugs diversos
 
 = 2.1 =
 * Simplificação do sistema de desconto para um único nível

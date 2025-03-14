@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: Custom Discount
- * Plugin URI: https://spielmann.com.br
+ * Plugin Name: Pluralweb - Custom Discount
+ * Plugin URI: https://pluralweb.biz
  * Description: Plugin personalizado para aplicar descontos progressivos baseados na quantidade de produtos no carrinho.
- * Version: 2.1
- * Author: Spielmann
- * Author URI: https://spielmann.com.br
- * Text Domain: desconto-automatico
+ * Version: 2.2
+ * Author: Pluralweb
+ * Author URI: https://pluralweb.biz
+ * Text Domain: custom-discount
  * Domain Path: /languages
  */
 
@@ -43,8 +43,8 @@ function check_woocommerce_compatibility() {
     if (version_compare($wc_version, $required_version, '<')) {
         add_action('admin_notices', function() use ($required_version, $wc_version) {
             echo '<div class="error"><p>';
-            echo sprintf('O plugin Desconto Automático requer WooCommerce %s ou superior. Você está usando a versão %s.', 
-                        esc_html($required_version), 
+            echo sprintf('O plugin Desconto Automático requer WooCommerce %s ou superior. Você está usando a versão %s.',
+                        esc_html($required_version),
                         esc_html($wc_version));
             echo '</p></div>';
         });
@@ -66,7 +66,7 @@ function desconto_automatico_activate() {
         array('quantity' => 6, 'percentage' => 10),
         array('quantity' => 10, 'percentage' => 15)
     );
-    
+
     update_option('custom_discount_levels', $default_levels);
     update_option('custom_discount_max', 0); // 0 = sem limite
 }
@@ -82,7 +82,7 @@ register_deactivation_hook(__FILE__, 'desconto_automatico_deactivate');
 function register_custom_discount_assets() {
     wp_register_style('custom-discount-style', plugins_url('assets/css/custom-discount.css', __FILE__));
     wp_register_script('custom-discount-script', plugins_url('assets/js/custom-discount.js', __FILE__), array('jquery'), '1.0', true);
-    
+
     // Registra o CSS do admin para kits
     if (is_admin() && get_post_type() === 'product') {
         wp_enqueue_style('custom-discount-admin-kit', plugins_url('assets/css/admin-kit.css', __FILE__));

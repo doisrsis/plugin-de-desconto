@@ -139,191 +139,11 @@ function custom_discount_save_kit_meta_box($post_id) {
 add_action('save_post', 'custom_discount_save_kit_meta_box');
 
 /**
- * Adiciona metabox para produtos do kit
- */
-function custom_discount_add_kit_metabox() {
-    add_meta_box(
-        'kit_products_metabox',
-        'Produtos do Kit',
-        'custom_discount_kit_metabox_html',
-        'product',
-        'normal',
-        'high'
-    );
-}
-add_action('add_meta_boxes', 'custom_discount_add_kit_metabox');
-
-/**
- * HTML do metabox de produtos do kit
- */
-function custom_discount_kit_metabox_html($post) {
-    // Recupera os produtos salvos
-    $kit_products = get_post_meta($post->ID, '_kit_products', true);
-    if (!is_array($kit_products)) {
-        $kit_products = array();
-    }
-
-    // Lista todos os produtos exceto o atual
-    $args = array(
-        'post_type' => 'product',
-        'posts_per_page' => -1,
-        'post__not_in' => array($post->ID)
-    );
-    $products = get_posts($args);
-
-    // Adiciona nonce para segurança
-    wp_nonce_field('kit_products_metabox', 'kit_products_nonce');
-    ?>
-    <style>
-        .kit-products-wrapper {
-            margin: 15px 0;
-        }
-        .kit-product-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 8px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .kit-product-item:hover {
-            background: #f5f5f5;
-        }
-        .kit-product-checkbox {
-            margin-right: 10px !important;
-        }
-        .kit-product-name {
-            flex: 1;
-            margin-right: 15px;
-        }
-        .kit-product-quantity {
-            width: 80px;
-            text-align: center;
-        }
-        .kit-products-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 8px;
-            background: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .kit-products-header-checkbox {
-            width: 20px;
-            margin-right: 10px;
-        }
-        .kit-products-header-name {
-            flex: 1;
-            margin-right: 15px;
-        }
-        .kit-products-header-quantity {
-            width: 80px;
-            text-align: center;
-        }
-    </style>
-    <div class="kit-products-wrapper">
-        <p>Selecione os produtos que fazem parte deste kit e suas quantidades:</p>
-        
-        <div class="kit-products-header">
-            <div class="kit-products-header-checkbox">
-                <input type="checkbox" id="select-all-products">
-            </div>
-            <div class="kit-products-header-name">Nome do Produto</div>
-            <div class="kit-products-header-quantity">Quantidade</div>
-        </div>
-
-        <?php foreach ($products as $product): 
-            $quantity = isset($kit_products[$product->ID]) ? $kit_products[$product->ID] : 1;
-            $checked = isset($kit_products[$product->ID]);
-        ?>
-            <div class="kit-product-item">
-                <input type="checkbox" 
-                       name="kit_products_selected[]" 
-                       value="<?php echo esc_attr($product->ID); ?>"
-                       class="kit-product-checkbox"
-                       <?php checked($checked, true); ?>>
-                
-                <span class="kit-product-name">
-                    <?php echo esc_html($product->post_title); ?>
-                </span>
-                
-                <input type="number" 
-                       name="kit_products_quantity[<?php echo esc_attr($product->ID); ?>]"
-                       value="<?php echo esc_attr($quantity); ?>"
-                       min="1"
-                       class="kit-product-quantity"
-                       <?php echo !$checked ? 'disabled' : ''; ?>>
-            </div>
-        <?php endforeach; ?>
-    </div>
-
-    <script>
-    jQuery(document).ready(function($) {
-        // Habilita/desabilita campo de quantidade ao marcar/desmarcar checkbox
-        $('.kit-product-checkbox').change(function() {
-            var quantityField = $(this).closest('.kit-product-item').find('.kit-product-quantity');
-            quantityField.prop('disabled', !this.checked);
-        });
-
-        // Seleciona/deseleciona todos os produtos
-        $('#select-all-products').change(function() {
-            var isChecked = this.checked;
-            $('.kit-product-checkbox').prop('checked', isChecked).trigger('change');
-        });
-    });
-    </script>
-    <?php
-}
-
-/**
- * Salva os produtos do kit
- */
-function custom_discount_save_kit_products($post_id) {
-    // Verifica nonce
-    if (!isset($_POST['kit_products_nonce']) || !wp_verify_nonce($_POST['kit_products_nonce'], 'kit_products_metabox')) {
-        return;
-    }
-
-    // Verifica se é autosave
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        return;
-    }
-
-    // Verifica permissões
-    if (!current_user_can('edit_post', $post_id)) {
-        return;
-    }
-
-    // Prepara array de produtos do kit
-    $kit_products = array();
-    
-    // Se tem produtos selecionados
-    if (isset($_POST['kit_products_selected']) && is_array($_POST['kit_products_selected'])) {
-        foreach ($_POST['kit_products_selected'] as $product_id) {
-            $product_id = intval($product_id);
-            $quantity = isset($_POST['kit_products_quantity'][$product_id]) ? 
-                       intval($_POST['kit_products_quantity'][$product_id]) : 1;
-            
-            if ($quantity > 0) {
-                $kit_products[$product_id] = $quantity;
-            }
-        }
-    }
-
-    // Salva os produtos do kit
-    update_post_meta($post_id, '_kit_products', $kit_products);
-}
-add_action('save_post_product', 'custom_discount_save_kit_products');
-
-/**
  * Obtém informações do kit no carrinho
  */
 function custom_discount_get_kit_cart_info($product_id) {
     // Obtém os produtos do kit
-    $kit_products = get_post_meta($product_id, '_kit_products', true);
+    $kit_products = get_post_meta($product_id, '_custom_discount_kit_products', true);
     if (empty($kit_products)) {
         error_log('Kit vazio para o produto ' . $product_id);
         return array(
@@ -440,7 +260,7 @@ function custom_discount_process_kit($cart_item_key, $product_id) {
     }
 
     // Obtém os produtos do kit
-    $kit_products = get_post_meta($product_id, '_kit_products', true);
+    $kit_products = get_post_meta($product_id, '_custom_discount_kit_products', true);
     if (empty($kit_products)) {
         return;
     }
@@ -459,7 +279,7 @@ add_action('woocommerce_add_to_cart', 'custom_discount_process_kit', 10, 2);
  * Verifica se um produto é um kit
  */
 function custom_discount_is_kit($product_id) {
-    $kit_products = get_post_meta($product_id, '_kit_products', true);
+    $kit_products = get_post_meta($product_id, '_custom_discount_kit_products', true);
     $is_kit = !empty($kit_products);
     error_log('Verificando kit - ID: ' . $product_id . ', É kit? ' . ($is_kit ? 'Sim' : 'Não'));
     return $is_kit;
