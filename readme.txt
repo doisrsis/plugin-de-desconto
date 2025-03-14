@@ -3,7 +3,7 @@ Contributors: spielmann
 Tags: woocommerce, discount, kit, progressive discount
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.0
+Stable tag: 2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,15 +18,21 @@ Características:
 * Definição de quantidade para cada produto no kit
 * Mensagens personalizadas para diferentes estados do carrinho
 * Interface amigável para configuração dos kits
-* Suporte a múltiplos níveis de desconto
+* Configuração simplificada de desconto
 
 == Installation ==
 
 1. Faça upload dos arquivos do plugin para a pasta `/wp-content/plugins/custom-discount`
 2. Ative o plugin através do menu 'Plugins' no WordPress
-3. Configure os níveis de desconto em WooCommerce > Configurações > Custom Discount
+3. Configure o desconto em WooCommerce > Configurações > Custom Discount
 
 == Changelog ==
+
+= 2.1 =
+* Simplificação do sistema de desconto para um único nível
+* Correção na exibição de mensagens em páginas de produtos individuais
+* Melhorias na interface de configuração
+* Correções de bugs diversos
 
 = 2.0 =
 * Nova interface para criação de kits com quantidades específicas por produto

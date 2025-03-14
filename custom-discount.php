@@ -3,7 +3,7 @@
  * Plugin Name: Custom Discount
  * Plugin URI: https://spielmann.com.br
  * Description: Plugin personalizado para aplicar descontos progressivos baseados na quantidade de produtos no carrinho.
- * Version: 2.0
+ * Version: 2.1
  * Author: Spielmann
  * Author URI: https://spielmann.com.br
  * Text Domain: desconto-automatico

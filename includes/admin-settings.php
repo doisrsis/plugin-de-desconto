@@ -20,30 +20,10 @@ function custom_discount_settings_page() {
     if (!current_user_can('manage_options')) return;
 
     if (isset($_POST['custom_discount_save'])) {
-        // Processa os níveis de desconto
-        $discount_levels = array();
-        if (isset($_POST['discount_level_quantity']) && isset($_POST['discount_level_percentage'])) {
-            $quantities = $_POST['discount_level_quantity'];
-            $percentages = $_POST['discount_level_percentage'];
-
-            foreach ($quantities as $key => $quantity) {
-                if (!empty($quantity) && isset($percentages[$key]) && $percentages[$key] !== '') {
-                    $discount_levels[] = array(
-                        'quantity' => intval($quantity),
-                        'percentage' => floatval($percentages[$key])
-                    );
-                }
-            }
-
-            // Ordena os níveis por quantidade
-            usort($discount_levels, function($a, $b) {
-                return $a['quantity'] - $b['quantity'];
-            });
-        }
-
         // Salva as configurações
         update_option('custom_discount_included_categories', isset($_POST['included_categories']) ? $_POST['included_categories'] : array());
-        update_option('custom_discount_levels', $discount_levels);
+        update_option('custom_discount_min_items', isset($_POST['custom_discount_min_items']) ? intval($_POST['custom_discount_min_items']) : 6);
+        update_option('custom_discount_percentage', isset($_POST['custom_discount_percentage']) ? floatval($_POST['custom_discount_percentage']) : 10);
         update_option('custom_discount_max', isset($_POST['custom_discount_max']) ? floatval($_POST['custom_discount_max']) : 0);
         update_option('custom_discount_messages', array(
             'has_discount' => sanitize_text_field($_POST['message_has_discount']),
@@ -58,10 +38,8 @@ function custom_discount_settings_page() {
 
     // Recupera as configurações salvas
     $included_categories = get_option('custom_discount_included_categories', array());
-    $discount_levels = get_option('custom_discount_levels', array(
-        array('quantity' => 6, 'percentage' => 10),
-        array('quantity' => 10, 'percentage' => 15)
-    ));
+    $min_items = get_option('custom_discount_min_items', 6);
+    $discount_percentage = get_option('custom_discount_percentage', 10);
     $max_discount = get_option('custom_discount_max', 0);
     $messages = get_option('custom_discount_messages', array(
         'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
@@ -90,62 +68,6 @@ function custom_discount_settings_page() {
         }
         .tab-content.active {
             display: block;
-        }
-        .discount-level {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .discount-level input[type="number"] {
-            width: 100px;
-        }
-        .remove-level {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #add-level {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .variables-description {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        .variables-description ul {
-            margin: 10px 0;
-            list-style-type: none;
-        }
-        .variables-description li {
-            margin: 5px 0;
-        }
-        .variables-description code {
-            background: #e9ecef;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 15px 0;
-        }
-        .category-item {
-            background: #f9f9f9;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
         }
         .message-variables {
             background: #f5f5f5;
@@ -183,13 +105,25 @@ function custom_discount_settings_page() {
             border-top: 1px solid #ddd;
             text-align: right;
         }
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .category-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 
     <div class="wrap">
         <h2><?php _e('Configurações de Desconto', 'desconto-automatico'); ?></h2>
 
         <h2 class="nav-tab-wrapper">
-            <a href="#tab-levels" class="nav-tab nav-tab-active"><?php _e('Níveis de Desconto', 'desconto-automatico'); ?></a>
+            <a href="#tab-levels" class="nav-tab nav-tab-active"><?php _e('Configurações de Desconto', 'desconto-automatico'); ?></a>
             <a href="#tab-messages" class="nav-tab"><?php _e('Mensagens Personalizadas', 'desconto-automatico'); ?></a>
             <a href="#tab-categories" class="nav-tab"><?php _e('Categorias Incluídas', 'desconto-automatico'); ?></a>
         </h2>
@@ -198,22 +132,20 @@ function custom_discount_settings_page() {
             <?php wp_nonce_field('custom_discount_settings'); ?>
 
             <div id="tab-levels" class="tab-content active">
-                <h3>Níveis de Desconto</h3>
+                <h3>Configurações de Desconto</h3>
                 <table class="form-table">
                     <tr>
-                        <th>Níveis</th>
+                        <th>Quantidade Mínima de Produtos</th>
                         <td>
-                            <div id="discount-levels">
-                                <?php foreach ($discount_levels as $level): ?>
-                                <div class="discount-level">
-                                    <input type="number" name="discount_level_quantity[]" value="<?php echo esc_attr($level['quantity']); ?>" min="1" placeholder="Quantidade" />
-                                    <input type="number" name="discount_level_percentage[]" value="<?php echo esc_attr($level['percentage']); ?>" min="0" max="100" step="0.1" placeholder="Porcentagem" />
-                                    <button type="button" class="remove-level">Remover</button>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <button type="button" id="add-level">Adicionar Nível</button>
-                            <p class="description">Configure os níveis de desconto baseados na quantidade de produtos.</p>
+                            <input type="number" name="custom_discount_min_items" value="<?php echo esc_attr($min_items); ?>" min="1" />
+                            <p class="description">Quantidade mínima de produtos para aplicar o desconto</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Porcentagem de Desconto</th>
+                        <td>
+                            <input type="number" name="custom_discount_percentage" value="<?php echo esc_attr($discount_percentage); ?>" min="0" max="100" step="0.1" />
+                            <p class="description">Porcentagem de desconto a ser aplicada</p>
                         </td>
                     </tr>
                     <tr>
@@ -351,27 +283,6 @@ function custom_discount_settings_page() {
             
             $('.tab-content').removeClass('active');
             $($(this).attr('href')).addClass('active');
-        });
-
-        // Função para template do novo nível
-        function getNewLevelTemplate() {
-            return `
-                <div class="discount-level">
-                    <input type="number" name="discount_level_quantity[]" value="" min="1" placeholder="Quantidade" />
-                    <input type="number" name="discount_level_percentage[]" value="" min="0" max="100" step="0.1" placeholder="Porcentagem" />
-                    <button type="button" class="remove-level">Remover</button>
-                </div>
-            `;
-        }
-
-        // Adicionar novo nível
-        $('#add-level').on('click', function() {
-            $('#discount-levels').append(getNewLevelTemplate());
-        });
-
-        // Remover nível
-        $(document).on('click', '.remove-level', function() {
-            $(this).closest('.discount-level').remove();
         });
     });
     </script>

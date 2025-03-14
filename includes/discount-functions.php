@@ -104,28 +104,23 @@ function get_non_eligible_items_subtotal() {
 }
 
 /**
- * Obtém o nível de desconto apropriado baseado na quantidade de itens.
+ * Obtem o nível de desconto apropriado baseado na quantidade de itens.
  *
  * @param int $item_count Número de itens no carrinho.
  * @return array|false Array com quantidade e porcentagem ou false se não houver desconto aplicável.
  */
 function get_applicable_discount_level($item_count) {
-    $levels = get_option('custom_discount_levels', array(
-        array('quantity' => 6, 'percentage' => 10),
-        array('quantity' => 10, 'percentage' => 15)
-    ));
-
-    $applicable_level = false;
-
-    foreach ($levels as $level) {
-        if ($item_count >= $level['quantity']) {
-            $applicable_level = $level;
-        } else {
-            break;
-        }
+    $min_items = get_option('custom_discount_min_items', 6);
+    $discount_percentage = get_option('custom_discount_percentage', 10);
+    
+    if ($item_count >= $min_items) {
+        return array(
+            'quantity' => $min_items,
+            'percentage' => $discount_percentage
+        );
     }
-
-    return $applicable_level;
+    
+    return false;
 }
 
 /**
@@ -169,28 +164,19 @@ function apply_custom_discount() {
 add_action('woocommerce_cart_calculate_fees', 'apply_custom_discount');
 
 /**
- * Obtém a quantidade de itens restantes para ativar o desconto.
+ * Obtem a quantidade de itens restantes para ativar o desconto.
  *
  * @return int Quantidade restante de itens necessários para o desconto.
  */
 function get_remaining_items_for_discount() {
+    $valid_items_count = get_eligible_items_count();
     $min_items = get_option('custom_discount_min_items', 6);
-    $cart = WC()->cart;
-    $current_items = 0;
-
-    if ($cart) {
-        foreach ($cart->get_cart() as $cart_item) {
-            // Verifica se o produto faz parte da categoria "kit"
-            $product_id = $cart_item['product_id'];
-            if (!is_product_eligible_for_discount($product_id)) {
-                continue; // Ignora itens da categoria "kit"
-            }
-            $current_items += $cart_item['quantity'];
-        }
+    
+    if ($valid_items_count >= $min_items) {
+        return 0;
     }
-
-    $remaining_items = max(0, $min_items - $current_items);
-    return $remaining_items;
+    
+    return $min_items - $valid_items_count;
 }
 
 /**
@@ -214,33 +200,36 @@ add_action('wp_ajax_get_remaining_items_for_discount', 'ajax_get_remaining_items
 add_action('wp_ajax_nopriv_get_remaining_items_for_discount', 'ajax_get_remaining_items_for_discount');
 
 /**
- * Obtém a mensagem de progresso para o próximo nível de desconto.
+ * Obtem a mensagem de progresso para o próximo nível de desconto.
  *
  * @return array Informações sobre o próximo nível de desconto.
  */
 function get_next_discount_level_info() {
     $current_items = get_eligible_items_count();
-    $levels = get_option('custom_discount_levels', array(
-        array('quantity' => 6, 'percentage' => 10),
-        array('quantity' => 10, 'percentage' => 15)
-    ));
+    $min_items = get_option('custom_discount_min_items', 6);
+    $discount_percentage = get_option('custom_discount_percentage', 10);
 
     $current_level = false;
     $next_level = false;
+    $remaining_items = 0;
 
-    foreach ($levels as $key => $level) {
-        if ($current_items >= $level['quantity']) {
-            $current_level = $level;
-        } else {
-            $next_level = $level;
-            break;
-        }
+    if ($current_items >= $min_items) {
+        $current_level = array(
+            'quantity' => $min_items,
+            'percentage' => $discount_percentage
+        );
+    } else {
+        $next_level = array(
+            'quantity' => $min_items,
+            'percentage' => $discount_percentage
+        );
+        $remaining_items = $min_items - $current_items;
     }
 
     return array(
         'current_level' => $current_level,
         'next_level' => $next_level,
-        'remaining_items' => $next_level ? ($next_level['quantity'] - $current_items) : 0
+        'remaining_items' => $remaining_items
     );
 }
 
@@ -295,29 +284,17 @@ function prepare_message_variables($kit_info = null, $current_level = null, $nex
         
         // Calcula o desconto baseado na quantidade total do kit
         $kit_discount = 0;
-        $discount_levels = get_option('custom_discount_levels', array());
-        if (!empty($discount_levels)) {
-            usort($discount_levels, function($a, $b) {
-                return $b['quantity'] - $a['quantity'];
-            });
-            
-            foreach ($discount_levels as $level) {
-                if ($kit_info['total_quantity'] >= $level['quantity']) {
-                    $kit_discount = $level['percentage'];
-                    break;
-                }
-            }
+        $discount_percentage = get_option('custom_discount_percentage', 10);
+        if ($kit_info['total_quantity'] >= get_option('custom_discount_min_items', 6)) {
+            $kit_discount = $discount_percentage;
         }
         $variables['discount'] = format_discount_percentage($kit_discount);
         
         // Próximo nível de desconto para o kit
         $next_kit_discount = 0;
-        foreach ($discount_levels as $level) {
-            if ($kit_info['total_quantity'] < $level['quantity']) {
-                $next_kit_discount = $level['percentage'];
-                $variables['next_discount'] = format_discount_percentage($next_kit_discount);
-                break;
-            }
+        if ($kit_info['total_quantity'] < get_option('custom_discount_min_items', 6)) {
+            $next_kit_discount = $discount_percentage;
+            $variables['next_discount'] = format_discount_percentage($next_kit_discount);
         }
         
         // Economia potencial
@@ -329,35 +306,29 @@ function prepare_message_variables($kit_info = null, $current_level = null, $nex
         }
         
         // Quantidade mínima do nível
-        foreach ($discount_levels as $level) {
-            if ($kit_info['total_quantity'] >= $level['quantity']) {
-                $variables['level_quantity'] = $level['quantity'];
-                break;
-            }
-        }
+        $variables['level_quantity'] = get_option('custom_discount_min_items', 6);
     }
-    
-    // Variáveis para produtos normais
-    if ($current_level) {
-        $variables['discount'] = format_discount_percentage($current_level['percentage']);
-        $variables['level_quantity'] = $current_level['quantity'];
-        
-        // Economia atual
-        $cart_total = WC()->cart ? WC()->cart->get_subtotal() : 0;
-        $current_savings = ($cart_total * $current_level['percentage']) / 100;
-        $variables['savings'] = number_format($current_savings, 2, ',', '.');
-    }
-    
-    if ($next_level) {
-        $variables['next_discount'] = format_discount_percentage($next_level['percentage']);
-        $variables['remaining'] = $next_level['quantity'] - $current_items;
-        $variables['level_quantity'] = $next_level['quantity'];
-        
-        // Economia potencial
-        if (!isset($variables['savings'])) {
-            $cart_total = WC()->cart ? WC()->cart->get_subtotal() : 0;
-            $potential_savings = ($cart_total * $next_level['percentage']) / 100;
-            $variables['savings'] = number_format($potential_savings, 2, ',', '.');
+    else {
+        // Variáveis para mensagens de desconto com base na quantidade
+        $min_items = get_option('custom_discount_min_items', 6);
+        $discount_percentage = get_option('custom_discount_percentage', 10);
+
+        // Adiciona a variável admin_discount para exibir a porcentagem cadastrada no admin
+        $variables['admin_discount'] = format_discount_percentage($discount_percentage);
+        $variables['discount'] = format_discount_percentage($discount_percentage);
+        $variables['level_quantity'] = $min_items;
+
+        $remaining_items = get_remaining_items_for_discount();
+        $variables['remaining'] = $remaining_items;
+
+        // Calcula a economia potencial
+        $potential_savings = calculate_potential_savings($discount_percentage, $remaining_items);
+        $variables['savings'] = number_format($potential_savings, 2, ',', '.');
+
+        // Informações sobre o próximo nível de desconto
+        $next_level = get_next_discount_level_info();
+        if ($next_level && $next_level['next_level']) {
+            $variables['next_discount'] = format_discount_percentage($next_level['next_level']['percentage']);
         }
     }
     
@@ -378,11 +349,6 @@ function custom_discount_message() {
     // Verifica se é um kit
     $is_product_page_kit = is_product() && custom_discount_is_kit($product->get_id());
 
-    // Se não for um kit ou página de produto, retorna vazio
-    if (!$is_product_page_kit || !is_product()) {
-        return '';
-    }
-
     // Recupera todas as mensagens personalizadas
     $messages = get_option('custom_discount_messages', array(
         'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
@@ -395,23 +361,41 @@ function custom_discount_message() {
 
     $message = '<div class="custom-product-discount-message">';
 
-    // Obtém informações do kit
-    $kit_info = custom_discount_get_kit_cart_info($product->get_id());
-    $variables = prepare_message_variables($kit_info);
+    // Se for um kit
+    if ($is_product_page_kit) {
+        // Obtém informações do kit
+        $kit_info = custom_discount_get_kit_cart_info($product->get_id());
+        $variables = prepare_message_variables($kit_info);
 
-    error_log('Gerando mensagem - Cart Quantity: ' . $kit_info['cart_quantity'] . ', Total: ' . $kit_info['total_quantity']);
-    
-    // Se tem todos os produtos do kit
-    if ($kit_info['cart_quantity'] >= $kit_info['total_quantity']) {
-        $message .= replace_message_variables($messages['kit_complete'], $variables);
+        // Se tem todos os produtos do kit
+        if ($kit_info['cart_quantity'] >= $kit_info['total_quantity']) {
+            $message .= replace_message_variables($messages['kit_complete'], $variables);
+        }
+        // Se tem alguns produtos do kit no carrinho
+        else if ($kit_info['cart_quantity'] > 0) {
+            $message .= replace_message_variables($messages['kit_no_cart_match'], $variables);
+        }
+        // Se não tem produtos do kit no carrinho
+        else {
+            $message .= replace_message_variables($messages['kit_discount'], $variables);
+        }
     }
-    // Se tem alguns produtos do kit no carrinho
-    else if ($kit_info['cart_quantity'] > 0) {
-        $message .= replace_message_variables($messages['kit_no_cart_match'], $variables);
-    }
-    // Se não tem produtos do kit no carrinho
-    else {
-        $message .= replace_message_variables($messages['kit_discount'], $variables);
+    // Se for um produto individual (não kit)
+    else if (is_product() && is_product_eligible_for_discount($product->get_id())) {
+        // Prepara as variáveis para produtos individuais
+        $variables = prepare_message_variables();
+        $valid_items_count = get_eligible_items_count();
+        $min_items = get_option('custom_discount_min_items', 6);
+        
+        // Verifica se já atingiu o desconto
+        if ($valid_items_count >= $min_items) {
+            $message .= replace_message_variables($messages['has_discount'], $variables);
+        } else {
+            $message .= replace_message_variables($messages['no_discount'], $variables);
+        }
+    } else {
+        // Não é um produto elegível para desconto
+        return '';
     }
 
     $message .= '</div>';
@@ -434,51 +418,41 @@ add_shortcode('custom_discount_message', 'custom_discount_message_shortcode');
 function custom_discount_product_message() {
     if (!is_product()) return;
     
-    echo custom_discount_message();
+    global $product;
+    if (!$product) return;
+    
+    $product_id = $product->get_id();
+    $is_eligible = is_product_eligible_for_discount($product_id);
+    
+    // Se o produto é elegível para desconto, exibe a mensagem de desconto
+    if ($is_eligible) {
+        // Recupera todas as mensagens personalizadas
+        $messages = get_option('custom_discount_messages', array(
+            'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
+            'no_discount' => 'Adicione {remaining} produtos ao carrinho para ganhar {next_discount}% de desconto e economizar R$ {savings}! Compras mínimas de {level_quantity} itens.'
+        ));
+        
+        // Prepara as variáveis para produtos individuais
+        $variables = prepare_message_variables();
+        $valid_items_count = get_eligible_items_count();
+        $min_items = get_option('custom_discount_min_items', 6);
+        
+        echo '<div class="custom-product-discount-message">';
+        
+        // Verifica se já atingiu o desconto
+        if ($valid_items_count >= $min_items) {
+            echo replace_message_variables($messages['has_discount'], $variables);
+        } else {
+            echo replace_message_variables($messages['no_discount'], $variables);
+        }
+        
+        echo '</div>';
+    } else {
+        // Se for um kit, usa a função original
+        echo custom_discount_message();
+    }
 }
 add_action('woocommerce_before_single_product', 'custom_discount_product_message', 9);
-
-/**
- * Modifica a mensagem do WooCommerce ao adicionar um produto ao carrinho.
- */
-/*function custom_woocommerce_add_to_cart_message($message, $products) {
-    // Obtém a quantidade mínima necessária para o desconto
-    $min_items = get_option('custom_discount_min_items', 6);
-    $discount_percentage = get_option('custom_discount_percentage', 10);
-
-    // Obtém a contagem de itens elegíveis no carrinho
-    $cart = WC()->cart;
-    $current_items = 0;
-
-    if ($cart) {
-        foreach ($cart->get_cart() as $cart_item) {
-            $product_id = $cart_item['product_id'];
-
-            // Se o produto estiver na categoria "kit", ignoramos
-            if (has_term('kit', 'product_cat', $product_id)) {
-                continue; // Ignora itens da categoria "kit"
-            }
-
-            $current_items += $cart_item['quantity'];
-        }
-    }
-
-    // Calcula quantos itens faltam para atingir o desconto
-    $remaining_items = max(0, $min_items - $current_items);
-
-    // Define a mensagem baseada na quantidade de itens
-    if ($current_items >= $min_items) {
-        $discount_message = "Parabéns! Você já tem direito a <strong style='color:#BD9E5E;'>{$discount_percentage}% de desconto</strong>.";
-    } else {
-        $discount_message = "Adicione mais <strong>{$remaining_items} produtos</strong> ao carrinho para obter <strong>{$discount_percentage}% de desconto</strong>!";
-    }
-
-    // Adiciona a mensagem à notificação padrão do WooCommerce
-    $custom_message = $message . '<span class="custom-discount-notice">' . wp_kses_post($discount_message) . '</span>';
-
-    return $custom_message;
-}
-add_filter('wc_add_to_cart_message_html', 'custom_woocommerce_add_to_cart_message', 10, 2);*/
 
 /**
  * Calcula a economia em reais baseada no desconto
