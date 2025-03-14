@@ -27,7 +27,6 @@ function custom_discount_settings_page() {
         update_option('custom_discount_max', isset($_POST['custom_discount_max']) ? floatval($_POST['custom_discount_max']) : 0);
         update_option('custom_discount_messages', array(
             'has_discount' => sanitize_text_field($_POST['message_has_discount']),
-            'has_next_level' => sanitize_text_field($_POST['message_has_next_level']),
             'no_discount' => sanitize_text_field($_POST['message_no_discount']),
             'kit_discount' => sanitize_text_field($_POST['message_kit_discount']),
             'kit_no_cart_match' => sanitize_text_field($_POST['message_kit_no_cart_match']),
@@ -43,7 +42,6 @@ function custom_discount_settings_page() {
     $max_discount = get_option('custom_discount_max', 0);
     $messages = get_option('custom_discount_messages', array(
         'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
-        'has_next_level' => 'Adicione mais {remaining} produtos para aumentar seu desconto para {next_discount}% e economizar mais R$ {savings}! Compras mínimas de {level_quantity} itens.',
         'no_discount' => 'Adicione {remaining} produtos ao carrinho para ganhar {next_discount}% de desconto e economizar R$ {savings}! Compras mínimas de {level_quantity} itens.',
         'kit_discount' => 'Este kit já tem um desconto especial de {discount}%, aproveite!',
         'kit_no_cart_match' => 'Você tem {cart_quantity} de {total_quantity} produtos deste kit no carrinho.',
@@ -163,13 +161,13 @@ function custom_discount_settings_page() {
                 <div class="variables-description">
                     <p>Você pode usar qualquer uma dessas variáveis em qualquer mensagem:</p>
                     <ul>
-                        <li><code>{discount}</code> - Porcentagem de desconto atual</li>
-                        <li><code>{next_discount}</code> - Porcentagem do próximo nível de desconto</li>
-                        <li><code>{remaining}</code> - Quantidade de produtos que faltam</li>
+                        <li><code>{discount}</code> - Porcentagem de desconto atual (calculada com base na quantidade de itens no carrinho)</li>
+                        <li><code>{admin_discount}</code> - Porcentagem de desconto configurada no painel administrativo (sempre mostra o valor configurado)</li>
+                        <li><code>{remaining}</code> - Quantidade de produtos que faltam para atingir o desconto</li>
                         <li><code>{savings}</code> - Valor da economia em reais</li>
                         <li><code>{cart_quantity}</code> - Quantidade de produtos no carrinho</li>
                         <li><code>{total_quantity}</code> - Quantidade total de produtos no kit</li>
-                        <li><code>{level_quantity}</code> - Quantidade mínima de produtos para o nível atual</li>
+                        <li><code>{level_quantity}</code> - Quantidade mínima de produtos para obter o desconto</li>
                     </ul>
                 </div>
 
@@ -184,18 +182,7 @@ function custom_discount_settings_page() {
                                 array('textarea_rows' => 3)
                             );
                             ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Mensagem quando tem próximo nível</th>
-                        <td>
-                            <?php
-                            wp_editor(
-                                $messages['has_next_level'],
-                                'message_has_next_level',
-                                array('textarea_rows' => 3)
-                            );
-                            ?>
+                            <p class="description">Esta mensagem é exibida quando o cliente já tem produtos suficientes no carrinho para receber o desconto. Aparece na página do produto individual e no carrinho.</p>
                         </td>
                     </tr>
                     <tr>
@@ -208,6 +195,7 @@ function custom_discount_settings_page() {
                                 array('textarea_rows' => 3)
                             );
                             ?>
+                            <p class="description">Esta mensagem é exibida quando o cliente ainda não tem produtos suficientes no carrinho para receber o desconto. Aparece na página do produto individual e no carrinho.</p>
                         </td>
                     </tr>
                     <tr>
@@ -220,6 +208,7 @@ function custom_discount_settings_page() {
                                 array('textarea_rows' => 3)
                             );
                             ?>
+                            <p class="description">Esta mensagem é exibida na página do produto kit quando não há produtos deste kit no carrinho.</p>
                         </td>
                     </tr>
                     <tr>
@@ -232,6 +221,7 @@ function custom_discount_settings_page() {
                                 array('textarea_rows' => 3)
                             );
                             ?>
+                            <p class="description">Esta mensagem é exibida na página do produto kit quando o cliente tem alguns produtos deste kit no carrinho, mas não a quantidade completa.</p>
                         </td>
                     </tr>
                     <tr>
@@ -244,6 +234,7 @@ function custom_discount_settings_page() {
                                 array('textarea_rows' => 3)
                             );
                             ?>
+                            <p class="description">Esta mensagem é exibida na página do produto kit quando o cliente tem a quantidade completa de produtos deste kit no carrinho.</p>
                         </td>
                     </tr>
                 </table>

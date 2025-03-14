@@ -331,7 +331,7 @@ function prepare_message_variables($kit_info = null, $current_level = null, $nex
         // Informações sobre o próximo nível de desconto
         $next_level = get_next_discount_level_info();
         if ($next_level && $next_level['next_level']) {
-            $variables['next_discount'] = format_discount_percentage($next_level['next_level']['percentage']);
+            $variables['next_discount'] = format_discount_percentage($discount_percentage);
         }
     }
     
