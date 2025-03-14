@@ -290,6 +290,9 @@ function prepare_message_variables($kit_info = null, $current_level = null, $nex
         }
         $variables['discount'] = format_discount_percentage($kit_discount);
         
+        // Adiciona a variável admin_discount para exibir a porcentagem cadastrada no admin
+        $variables['admin_discount'] = format_discount_percentage($discount_percentage);
+        
         // Próximo nível de desconto para o kit
         $next_kit_discount = 0;
         if ($kit_info['total_quantity'] < get_option('custom_discount_min_items', 6)) {
