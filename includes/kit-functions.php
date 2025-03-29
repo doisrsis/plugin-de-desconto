@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
  * Adiciona um campo para selecionar produtos e quantidades vinculados no admin
  */
 function custom_discount_add_kit_meta_box() {
-    remove_meta_box('postimagediv', 'product', 'side');
+    // Removida a linha que ocultava a imagem destacada
     add_meta_box(
         'custom_discount_kit_products',
         'Produtos do Kit',
