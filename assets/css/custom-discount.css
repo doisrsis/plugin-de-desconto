@@ -21,19 +21,11 @@
     background: #fff;
     padding: 15px 20px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 999999;
-    min-width: 250px;
-    max-width: 350px;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s ease;
-    border-left: 4px solid #BD9E5E;
-}
-
-.custom-discount-toast.show {
-    transform: translateY(0);
-    opacity: 1;
+    min-width: 280px;
+    max-width: 450px;
+    border: 3px solid #BD9E5E;
 }
 
 .custom-discount-toast-content {
@@ -50,15 +42,32 @@
     font-size: 18px;
     cursor: pointer;
     color: #666;
-    padding: 0;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    text-align: center;
+    width: 10px;
+    height: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    transition: background-color 0.2s ease;
+    padding: 10px;
 }
 
 .custom-discount-toast-close:hover {
+    background-color: #f0f0f0;
     color: #333;
+    padding: 12px;
+}
+
+/* Adiciona um indicador visual para mostrar que a notificação é permanente */
+.custom-discount-toast:after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #BD9E5E, transparent);
+    border-radius: 0 0 8px 8px;
 }
 
 /* Variações de toast */

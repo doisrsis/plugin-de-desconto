@@ -17,25 +17,9 @@ jQuery(document).ready(function($) {
         // Adiciona o toast ao body
         $('body').append(toast);
 
-        // Anima a entrada do toast
-        setTimeout(() => {
-            toast.addClass('show');
-        }, 100);
-
-        // Remove o toast após 5 segundos
-        setTimeout(() => {
-            toast.removeClass('show');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }, 5000);
-
         // Fecha o toast ao clicar no botão
         toast.find('.custom-discount-toast-close').on('click', function() {
-            toast.removeClass('show');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
+            toast.remove();
         });
     }
 
@@ -63,11 +47,17 @@ jQuery(document).ready(function($) {
 
                     // Se atingiu um novo nível de desconto
                     if (currentLevel && (!lastDiscountLevel || currentLevel.percentage > lastDiscountLevel.percentage)) {
-                        showDiscountToast(`
-                            <strong>Parabéns!</strong><br>
-                            Você atingiu ${currentLevel.percentage}% de desconto!
-                            ${nextLevel ? `<br>Adicione mais ${response.data.remaining_items} produtos para ${nextLevel.percentage}%` : ''}
-                        `);
+                        // Usa a mensagem personalizada do toast se estiver disponivel
+                        if (response.data.toast_message) {
+                            showDiscountToast(response.data.toast_message);
+                        } else {
+                            // Fallback para a mensagem padrão
+                            showDiscountToast(`
+                                <strong>Parabéns!</strong><br>
+                                Você atingiu ${currentLevel.percentage}% de desconto!
+                                ${nextLevel ? `<br>Adicione mais ${response.data.remaining_items} produtos para ${nextLevel.percentage}%` : ''}
+                            `);
+                        }
                     }
 
                     lastDiscountLevel = currentLevel;

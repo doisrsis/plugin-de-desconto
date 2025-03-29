@@ -3,7 +3,7 @@ Contributors: Pluralweb
 Tags: woocommerce, discount, kit, progressive discount
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.3
+Stable tag: 2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,11 @@ Características:
 3. Configure o desconto em WooCommerce > Configurações > Custom Discount
 
 == Changelog ==
+
+= 2.4 =
+* Adicionado campo para personalizar a mensagem da notificação toast
+* Modificada a notificação toast para permanecer fixa na tela até ser fechada pelo usuário
+* Melhorada a aparência visual da notificação toast
 
 = 2.3 =
 * Corrigido problema que impedia a exibição do campo de imagem destacada no cadastro de produtos
