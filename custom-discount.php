@@ -3,7 +3,7 @@
  * Plugin Name: Pluralweb - Custom Discount
  * Plugin URI: https://pluralweb.biz
  * Description: Plugin personalizado para aplicar descontos progressivos baseados na quantidade de produtos no carrinho.
- * Version: 2.4
+ * Version: 2.5
  * Author: Pluralweb
  * Author URI: https://pluralweb.biz
  * Text Domain: custom-discount

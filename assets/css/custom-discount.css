@@ -16,8 +16,6 @@
 /* Estilos para as notificações toast */
 .custom-discount-toast {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
     background: #fff;
     padding: 15px 20px;
     border-radius: 8px;

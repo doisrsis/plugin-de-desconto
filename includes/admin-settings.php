@@ -25,12 +25,15 @@ function custom_discount_settings_page() {
         update_option('custom_discount_min_items', isset($_POST['custom_discount_min_items']) ? intval($_POST['custom_discount_min_items']) : 6);
         update_option('custom_discount_percentage', isset($_POST['custom_discount_percentage']) ? floatval($_POST['custom_discount_percentage']) : 10);
         update_option('custom_discount_max', isset($_POST['custom_discount_max']) ? floatval($_POST['custom_discount_max']) : 0);
+        update_option('custom_discount_toast_position_h', isset($_POST['custom_discount_toast_position_h']) ? sanitize_text_field($_POST['custom_discount_toast_position_h']) : 'right');
+        update_option('custom_discount_toast_position_v', isset($_POST['custom_discount_toast_position_v']) ? sanitize_text_field($_POST['custom_discount_toast_position_v']) : 'bottom');
         update_option('custom_discount_messages', array(
             'has_discount' => sanitize_text_field($_POST['message_has_discount']),
             'no_discount' => sanitize_text_field($_POST['message_no_discount']),
             'kit_discount' => sanitize_text_field($_POST['message_kit_discount']),
             'kit_no_cart_match' => sanitize_text_field($_POST['message_kit_no_cart_match']),
-            'kit_complete' => sanitize_text_field($_POST['message_kit_complete'])
+            'kit_complete' => sanitize_text_field($_POST['message_kit_complete']),
+            'toast_notification' => sanitize_text_field($_POST['message_toast_notification'])
         ));
         echo '<div class="updated"><p>Configurações salvas com sucesso!</p></div>';
     }
@@ -40,12 +43,15 @@ function custom_discount_settings_page() {
     $min_items = get_option('custom_discount_min_items', 6);
     $discount_percentage = get_option('custom_discount_percentage', 10);
     $max_discount = get_option('custom_discount_max', 0);
+    $toast_position_h = get_option('custom_discount_toast_position_h', 'right');
+    $toast_position_v = get_option('custom_discount_toast_position_v', 'bottom');
     $messages = get_option('custom_discount_messages', array(
         'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
         'no_discount' => 'Adicione {remaining} produtos ao carrinho para ganhar {next_discount}% de desconto e economizar R$ {savings}! Compras mínimas de {level_quantity} itens.',
         'kit_discount' => 'Este kit já tem um desconto especial de {discount}%, aproveite!',
         'kit_no_cart_match' => 'Você tem {cart_quantity} de {total_quantity} produtos deste kit no carrinho.',
-        'kit_complete' => 'Parabéns! Você tem {cart_quantity} produtos de {total_quantity} deste kit no carrinho e ganhou o desconto de {discount}%.'
+        'kit_complete' => 'Parabéns! Você tem {cart_quantity} produtos de {total_quantity} deste kit no carrinho e ganhou o desconto de {discount}%.',
+        'toast_notification' => '<strong>Parabéns!</strong><br>Você atingiu {discount}% de desconto!<br>Adicione mais {remaining} produtos para {next_discount}%'
     ));
 
     // Obtém todas as categorias do WooCommerce
@@ -124,6 +130,7 @@ function custom_discount_settings_page() {
             <a href="#tab-levels" class="nav-tab nav-tab-active"><?php _e('Configurações de Desconto', 'desconto-automatico'); ?></a>
             <a href="#tab-messages" class="nav-tab"><?php _e('Mensagens Personalizadas', 'desconto-automatico'); ?></a>
             <a href="#tab-categories" class="nav-tab"><?php _e('Categorias Incluídas', 'desconto-automatico'); ?></a>
+            <a href="#tab-toast" class="nav-tab"><?php _e('Notificação Toast', 'desconto-automatico'); ?></a>
         </h2>
 
         <form method="post" id="discount-settings-form">
@@ -237,6 +244,19 @@ function custom_discount_settings_page() {
                             <p class="description">Esta mensagem é exibida na página do produto kit quando o cliente tem a quantidade completa de produtos deste kit no carrinho.</p>
                         </td>
                     </tr>
+                    <tr>
+                        <th>Mensagem de notificação de desconto</th>
+                        <td>
+                            <?php
+                            wp_editor(
+                                $messages['toast_notification'],
+                                'message_toast_notification',
+                                array('textarea_rows' => 3)
+                            );
+                            ?>
+                            <p class="description">Esta mensagem é exibida como uma notificação de desconto.</p>
+                        </td>
+                    </tr>
                 </table>
             </div>
 
@@ -256,6 +276,32 @@ function custom_discount_settings_page() {
                     </div>
                     <?php endforeach; ?>
                 </div>
+            </div>
+
+            <div id="tab-toast" class="tab-content">
+                <h3>Notificação Toast</h3>
+                <table class="form-table">
+                    <tr>
+                        <th>Posição Horizontal da Notificação</th>
+                        <td>
+                            <select name="custom_discount_toast_position_h">
+                                <option value="left" <?php selected($toast_position_h, 'left'); ?>><?php _e('Esquerda', 'desconto-automatico'); ?></option>
+                                <option value="right" <?php selected($toast_position_h, 'right'); ?>><?php _e('Direita', 'desconto-automatico'); ?></option>
+                            </select>
+                            <p class="description">Selecione a posição horizontal da notificação toast.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Posição Vertical da Notificação</th>
+                        <td>
+                            <select name="custom_discount_toast_position_v">
+                                <option value="top" <?php selected($toast_position_v, 'top'); ?>><?php _e('Topo', 'desconto-automatico'); ?></option>
+                                <option value="bottom" <?php selected($toast_position_v, 'bottom'); ?>><?php _e('Fundo', 'desconto-automatico'); ?></option>
+                            </select>
+                            <p class="description">Selecione a posição vertical da notificação toast.</p>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <div class="submit-wrapper">

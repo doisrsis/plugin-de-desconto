@@ -237,8 +237,31 @@ function get_next_discount_level_info() {
  * Endpoint AJAX para obter o nível atual de desconto
  */
 function get_current_discount_level_ajax() {
-    $discount_info = get_next_discount_level_info();
-    wp_send_json_success($discount_info);
+    $current_items = get_eligible_items_count();
+    $current_level = get_applicable_discount_level($current_items);
+    $next_level = get_next_discount_level_info();
+    
+    // Obter a mensagem personalizada para o toast
+    $messages = get_option('custom_discount_messages', array(
+        'toast_notification' => '<strong>Parabéns!</strong><br>Você atingiu {discount}% de desconto!<br>Adicione mais {remaining} produtos para {next_discount}%'
+    ));
+    
+    // Obter as posições da notificação toast
+    $toast_position_h = get_option('custom_discount_toast_position_h', 'right');
+    $toast_position_v = get_option('custom_discount_toast_position_v', 'bottom');
+    
+    // Preparar variáveis para a mensagem
+    $variables = prepare_message_variables(null, $current_level, $next_level, $current_items);
+    $toast_message = isset($messages['toast_notification']) ? replace_message_variables($messages['toast_notification'], $variables) : '';
+    
+    wp_send_json_success(array(
+        'current_level' => $current_level,
+        'next_level' => $next_level,
+        'remaining_items' => $next_level ? $next_level['quantity'] - $current_items : 0,
+        'toast_message' => $toast_message,
+        'toast_position_h' => $toast_position_h,
+        'toast_position_v' => $toast_position_v
+    ));
 }
 add_action('wp_ajax_get_current_discount_level', 'get_current_discount_level_ajax');
 add_action('wp_ajax_nopriv_get_current_discount_level', 'get_current_discount_level_ajax');
