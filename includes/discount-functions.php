@@ -333,6 +333,32 @@ function prepare_message_variables($kit_info = null, $current_level = null, $nex
         
         // Quantidade mínima do nível
         $variables['level_quantity'] = get_option('custom_discount_min_items', 6);
+        
+        // Adiciona valor do produto com desconto
+        global $product;
+        if ($product) {
+            $product_price = $product->get_price();
+            $discounted_price = $product_price - ($product_price * $kit_discount / 100);
+            $variables['product_discounted_price'] = number_format($discounted_price, 2, ',', '.');
+            
+            // Adiciona valor do rótulo individual do kit com desconto
+            // Obtemos a quantidade total de rótulos no kit
+            $kit_products = get_post_meta($product->get_id(), '_custom_discount_kit_products', true);
+            $total_rotulos = 0;
+            
+            if (is_array($kit_products) && !empty($kit_products)) {
+                foreach ($kit_products as $prod_id => $quantity) {
+                    $total_rotulos += intval($quantity);
+                }
+                
+                // Se temos rótulos no kit, calculamos o preço por rótulo
+                if ($total_rotulos > 0) {
+                    // O preço por rótulo é simplesmente o preço do kit dividido pela quantidade de rótulos
+                    $preco_por_rotulo = $product_price / $total_rotulos;
+                    $variables['kit_rotulo_price'] = number_format($preco_por_rotulo, 2, ',', '.');
+                }
+            }
+        }
     }
     else {
         // Variáveis para mensagens de desconto com base na quantidade
@@ -355,6 +381,14 @@ function prepare_message_variables($kit_info = null, $current_level = null, $nex
         $next_level = get_next_discount_level_info();
         if ($next_level && $next_level['next_level']) {
             $variables['next_discount'] = format_discount_percentage($discount_percentage);
+        }
+        
+        // Adiciona valor do produto com desconto
+        global $product;
+        if ($product && is_product()) {
+            $product_price = $product->get_price();
+            $discounted_price = $product_price - ($product_price * $discount_percentage / 100);
+            $variables['product_discounted_price'] = number_format($discounted_price, 2, ',', '.');
         }
     }
     
@@ -385,7 +419,7 @@ function custom_discount_message() {
         'kit_complete' => 'Parabéns! Você já tem a quantidade de produtos deste kit no carrinho, e garantiu seu desconto!'
     ));
 
-    $message = '<div class="custom-product-discount-message">';
+    $message = '';
 
     // Se for um kit
     if ($is_product_page_kit) {
@@ -395,15 +429,15 @@ function custom_discount_message() {
 
         // Se tem todos os produtos do kit
         if ($kit_info['cart_quantity'] >= $kit_info['total_quantity']) {
-            $message .= replace_message_variables($messages['kit_complete'], $variables);
+            $message = replace_message_variables($messages['kit_complete'], $variables);
         }
         // Se tem alguns produtos do kit no carrinho
         else if ($kit_info['cart_quantity'] > 0) {
-            $message .= replace_message_variables($messages['kit_no_cart_match'], $variables);
+            $message = replace_message_variables($messages['kit_no_cart_match'], $variables);
         }
         // Se não tem produtos do kit no carrinho
         else {
-            $message .= replace_message_variables($messages['kit_discount'], $variables);
+            $message = replace_message_variables($messages['kit_discount'], $variables);
         }
     }
     // Se for um produto individual (não kit)
@@ -415,16 +449,15 @@ function custom_discount_message() {
         
         // Verifica se já atingiu o desconto
         if ($valid_items_count >= $min_items) {
-            $message .= replace_message_variables($messages['has_discount'], $variables);
+            $message = replace_message_variables($messages['has_discount'], $variables);
         } else {
-            $message .= replace_message_variables($messages['no_discount'], $variables);
+            $message = replace_message_variables($messages['no_discount'], $variables);
         }
     } else {
         // Não é um produto elegível para desconto
         return '';
     }
 
-    $message .= '</div>';
     return $message;
 }
 
@@ -463,7 +496,7 @@ function custom_discount_product_message() {
         $valid_items_count = get_eligible_items_count();
         $min_items = get_option('custom_discount_min_items', 6);
         
-        echo '<div class="custom-product-discount-message">';
+        echo '<div class="custom-discount-message-top debug-mobile-message">';
         
         // Verifica se já atingiu o desconto
         if ($valid_items_count >= $min_items) {
@@ -475,7 +508,10 @@ function custom_discount_product_message() {
         echo '</div>';
     } else {
         // Se for um kit, usa a função original
-        echo custom_discount_message();
+        $message = custom_discount_message();
+        if (!empty($message)) {
+            echo '<div class="custom-discount-message-top debug-mobile-message">' . $message . '</div>';
+        }
     }
 }
 add_action('woocommerce_before_single_product', 'custom_discount_product_message', 9);
@@ -514,3 +550,29 @@ function calculate_potential_savings($next_discount_percentage, $remaining_items
     
     return calculate_savings($current_subtotal, $next_discount_percentage);
 }
+
+/**
+ * Endpoint AJAX para obter o ponto de quebra para dispositivos móveis
+ */
+function get_mobile_breakpoint_ajax() {
+    // Obtem as configurações de personalização visual
+    $breakpoint = get_option('custom_discount_mobile_breakpoint', 768);
+    $bg_color = get_option('custom_discount_message_bg_color', '#ffffff');
+    $border_color = get_option('custom_discount_message_border_color', '#dddddd');
+    $text_color = get_option('custom_discount_message_text_color', '#333333');
+    $font_family = get_option('custom_discount_message_font_family', 'inherit');
+    $font_size = get_option('custom_discount_message_font_size', 14);
+    
+    wp_send_json_success(array(
+        'breakpoint' => $breakpoint,
+        'styles' => array(
+            'bg_color' => $bg_color,
+            'border_color' => $border_color,
+            'text_color' => $text_color,
+            'font_family' => $font_family,
+            'font_size' => $font_size
+        )
+    ));
+}
+add_action('wp_ajax_get_mobile_breakpoint', 'get_mobile_breakpoint_ajax');
+add_action('wp_ajax_nopriv_get_mobile_breakpoint', 'get_mobile_breakpoint_ajax');

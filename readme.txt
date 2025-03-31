@@ -3,7 +3,7 @@ Contributors: Pluralweb
 Tags: woocommerce, discount, kit, progressive discount
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 2.5
+Stable tag: 2.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,27 @@ Características:
 3. Configure o desconto em WooCommerce > Configurações > Custom Discount
 
 == Changelog ==
+
+= 2.9 =
+* Adicionada nova variável {product_discounted_price} para exibir o preço do produto individual com o desconto aplicado
+* Adicionada nova variável {kit_rotulo_price} para exibir o preço por rótulo individual em um kit com desconto aplicado
+* Corrigido o cálculo do preço com desconto para kits, considerando a quantidade total de rótulos no kit
+* Melhorada a documentação das variáveis disponíveis para as mensagens
+
+= 2.8 =
+* Adicionada personalização visual das mensagens de desconto
+* Adicionados campos para configurar cor de fundo, cor da borda e cor do texto
+* Adicionados campos para configurar tipo e tamanho da fonte
+* Melhorada a aplicação de estilos personalizados via JavaScript
+
+= 2.7 =
+* Corrigido problema de mensagens duplicadas na página do produto
+* Adicionada exibição responsiva das mensagens: no topo para dispositivos móveis e acima do botão de adicionar ao carrinho para desktop
+* Adicionada opção para configurar o ponto de quebra para dispositivos móveis no painel administrativo
+
+= 2.6 =
+* Adicionada opção "Centro" para posicionamento horizontal e vertical da notificação toast
+* Melhorada a lógica de posicionamento para centralizar corretamente a notificação
 
 = 2.5 =
 * Adicionada possibilidade de configurar a posição da notificação toast (superior/inferior, esquerda/direita)

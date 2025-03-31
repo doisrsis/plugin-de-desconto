@@ -27,6 +27,12 @@ function custom_discount_settings_page() {
         update_option('custom_discount_max', isset($_POST['custom_discount_max']) ? floatval($_POST['custom_discount_max']) : 0);
         update_option('custom_discount_toast_position_h', isset($_POST['custom_discount_toast_position_h']) ? sanitize_text_field($_POST['custom_discount_toast_position_h']) : 'right');
         update_option('custom_discount_toast_position_v', isset($_POST['custom_discount_toast_position_v']) ? sanitize_text_field($_POST['custom_discount_toast_position_v']) : 'bottom');
+        update_option('custom_discount_mobile_breakpoint', isset($_POST['custom_discount_mobile_breakpoint']) ? intval($_POST['custom_discount_mobile_breakpoint']) : 768);
+        update_option('custom_discount_message_bg_color', isset($_POST['custom_discount_message_bg_color']) ? sanitize_text_field($_POST['custom_discount_message_bg_color']) : '#ffffff');
+        update_option('custom_discount_message_border_color', isset($_POST['custom_discount_message_border_color']) ? sanitize_text_field($_POST['custom_discount_message_border_color']) : '#dddddd');
+        update_option('custom_discount_message_text_color', isset($_POST['custom_discount_message_text_color']) ? sanitize_text_field($_POST['custom_discount_message_text_color']) : '#333333');
+        update_option('custom_discount_message_font_family', isset($_POST['custom_discount_message_font_family']) ? sanitize_text_field($_POST['custom_discount_message_font_family']) : 'inherit');
+        update_option('custom_discount_message_font_size', isset($_POST['custom_discount_message_font_size']) ? intval($_POST['custom_discount_message_font_size']) : 14);
         update_option('custom_discount_messages', array(
             'has_discount' => sanitize_text_field($_POST['message_has_discount']),
             'no_discount' => sanitize_text_field($_POST['message_no_discount']),
@@ -45,6 +51,12 @@ function custom_discount_settings_page() {
     $max_discount = get_option('custom_discount_max', 0);
     $toast_position_h = get_option('custom_discount_toast_position_h', 'right');
     $toast_position_v = get_option('custom_discount_toast_position_v', 'bottom');
+    $mobile_breakpoint = get_option('custom_discount_mobile_breakpoint', 768);
+    $message_bg_color = get_option('custom_discount_message_bg_color', '#ffffff');
+    $message_border_color = get_option('custom_discount_message_border_color', '#dddddd');
+    $message_text_color = get_option('custom_discount_message_text_color', '#333333');
+    $message_font_family = get_option('custom_discount_message_font_family', 'inherit');
+    $message_font_size = get_option('custom_discount_message_font_size', 14);
     $messages = get_option('custom_discount_messages', array(
         'has_discount' => 'Parabéns! Você já tem direito a {discount}% de desconto no carrinho! Compras mínimas de {level_quantity} itens.',
         'no_discount' => 'Adicione {remaining} produtos ao carrinho para ganhar {next_discount}% de desconto e economizar R$ {savings}! Compras mínimas de {level_quantity} itens.',
@@ -175,6 +187,8 @@ function custom_discount_settings_page() {
                         <li><code>{cart_quantity}</code> - Quantidade de produtos no carrinho</li>
                         <li><code>{total_quantity}</code> - Quantidade total de produtos no kit</li>
                         <li><code>{level_quantity}</code> - Quantidade mínima de produtos para obter o desconto</li>
+                        <li><code>{product_discounted_price}</code> - Preço do produto individual com o desconto aplicado</li>
+                        <li><code>{kit_rotulo_price}</code> - Preço por rótulo individual em um kit com desconto aplicado</li>
                     </ul>
                 </div>
 
@@ -286,6 +300,7 @@ function custom_discount_settings_page() {
                         <td>
                             <select name="custom_discount_toast_position_h">
                                 <option value="left" <?php selected($toast_position_h, 'left'); ?>><?php _e('Esquerda', 'desconto-automatico'); ?></option>
+                                <option value="center" <?php selected($toast_position_h, 'center'); ?>><?php _e('Centro', 'desconto-automatico'); ?></option>
                                 <option value="right" <?php selected($toast_position_h, 'right'); ?>><?php _e('Direita', 'desconto-automatico'); ?></option>
                             </select>
                             <p class="description">Selecione a posição horizontal da notificação toast.</p>
@@ -296,9 +311,64 @@ function custom_discount_settings_page() {
                         <td>
                             <select name="custom_discount_toast_position_v">
                                 <option value="top" <?php selected($toast_position_v, 'top'); ?>><?php _e('Topo', 'desconto-automatico'); ?></option>
+                                <option value="center" <?php selected($toast_position_v, 'center'); ?>><?php _e('Centro', 'desconto-automatico'); ?></option>
                                 <option value="bottom" <?php selected($toast_position_v, 'bottom'); ?>><?php _e('Fundo', 'desconto-automatico'); ?></option>
                             </select>
                             <p class="description">Selecione a posição vertical da notificação toast.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Ponto de Quebra para Dispositivos Móveis</th>
+                        <td>
+                            <input type="number" name="custom_discount_mobile_breakpoint" value="<?php echo esc_attr($mobile_breakpoint); ?>" min="320" max="1200" step="1" /> px
+                            <p class="description">Define o ponto de quebra (em pixels) para dispositivos móveis. Abaixo desse valor, a mensagem do topo será exibida e a mensagem abaixo do resumo do produto será ocultada.</p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <h3>Personalização Visual das Mensagens</h3>
+                <table class="form-table">
+                    <tr>
+                        <th>Cor de Fundo</th>
+                        <td>
+                            <input type="color" name="custom_discount_message_bg_color" value="<?php echo esc_attr($message_bg_color); ?>" />
+                            <p class="description">Selecione a cor de fundo das mensagens de desconto.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Cor da Borda</th>
+                        <td>
+                            <input type="color" name="custom_discount_message_border_color" value="<?php echo esc_attr($message_border_color); ?>" />
+                            <p class="description">Selecione a cor da borda lateral das mensagens de desconto.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Cor do Texto</th>
+                        <td>
+                            <input type="color" name="custom_discount_message_text_color" value="<?php echo esc_attr($message_text_color); ?>" />
+                            <p class="description">Selecione a cor do texto das mensagens de desconto.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Tipo de Fonte</th>
+                        <td>
+                            <select name="custom_discount_message_font_family">
+                                <option value="inherit" <?php selected($message_font_family, 'inherit'); ?>><?php _e('Padrão do Site', 'desconto-automatico'); ?></option>
+                                <option value="Arial, sans-serif" <?php selected($message_font_family, 'Arial, sans-serif'); ?>><?php _e('Arial', 'desconto-automatico'); ?></option>
+                                <option value="Helvetica, Arial, sans-serif" <?php selected($message_font_family, 'Helvetica, Arial, sans-serif'); ?>><?php _e('Helvetica', 'desconto-automatico'); ?></option>
+                                <option value="Georgia, serif" <?php selected($message_font_family, 'Georgia, serif'); ?>><?php _e('Georgia', 'desconto-automatico'); ?></option>
+                                <option value="'Times New Roman', Times, serif" <?php selected($message_font_family, "'Times New Roman', Times, serif"); ?>><?php _e('Times New Roman', 'desconto-automatico'); ?></option>
+                                <option value="Verdana, Geneva, sans-serif" <?php selected($message_font_family, 'Verdana, Geneva, sans-serif'); ?>><?php _e('Verdana', 'desconto-automatico'); ?></option>
+                                <option value="'Trebuchet MS', Helvetica, sans-serif" <?php selected($message_font_family, "'Trebuchet MS', Helvetica, sans-serif"); ?>><?php _e('Trebuchet MS', 'desconto-automatico'); ?></option>
+                            </select>
+                            <p class="description">Selecione o tipo de fonte para as mensagens de desconto.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Tamanho da Fonte</th>
+                        <td>
+                            <input type="number" name="custom_discount_message_font_size" value="<?php echo esc_attr($message_font_size); ?>" min="10" max="24" step="1" /> px
+                            <p class="description">Define o tamanho da fonte para as mensagens de desconto.</p>
                         </td>
                     </tr>
                 </table>
