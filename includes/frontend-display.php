@@ -1,16 +1,14 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-// Carrega os estilos CSS do plugin
+/**
+ * Carrega os estilos CSS e scripts do plugin
+ */
 function custom_discount_enqueue_styles() {
-    wp_enqueue_style(
-        'custom-discount-styles',
-        DESCONTO_AUTOMATICO_URL . 'assets/css/custom-discount.css',
-        array(),
-        '1.0.0'
-    );
-
-    // Carrega o JavaScript
+    // Carrega o CSS
+    wp_enqueue_style('custom-discount-styles', DESCONTO_AUTOMATICO_URL . 'assets/css/custom-discount.css', array(), '1.0.0');
+    
+    // Carrega o JavaScript principal
     wp_enqueue_script(
         'custom-discount-script',
         DESCONTO_AUTOMATICO_URL . 'assets/js/custom-discount.js',
@@ -19,7 +17,7 @@ function custom_discount_enqueue_styles() {
         true
     );
 
-    // Passa variáveis para o JavaScript
+    // Passa variáveis para o JavaScript principal
     wp_localize_script(
         'custom-discount-script',
         'customDiscount',
@@ -27,6 +25,16 @@ function custom_discount_enqueue_styles() {
             'ajax_url' => admin_url('admin-ajax.php')
         )
     );
+    
+    // Registra e carrega o JavaScript para as mensagens responsivas
+    wp_register_script('custom-discount-responsive', DESCONTO_AUTOMATICO_URL . 'assets/js/responsive-messages.js', array('jquery'), '1.0.0', true);
+    
+    // Passa os parâmetros necessários para o JavaScript responsivo
+    wp_localize_script('custom-discount-responsive', 'custom_discount_params', array(
+        'ajax_url' => admin_url('admin-ajax.php')
+    ));
+    
+    wp_enqueue_script('custom-discount-responsive');
 }
 add_action('wp_enqueue_scripts', 'custom_discount_enqueue_styles');
 
@@ -48,7 +56,8 @@ function custom_discount_display_message() {
     // Obtém a mensagem
     $message = custom_discount_message();
     if (!empty($message)) {
-        echo $message;
+        // Adiciona uma classe para debug
+        echo '<div class="custom-discount-message-bottom debug-desktop-message">' . $message . '</div>';
     }
 }
 add_action('woocommerce_before_add_to_cart_form', 'custom_discount_display_message');

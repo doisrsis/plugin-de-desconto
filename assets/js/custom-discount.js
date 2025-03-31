@@ -18,15 +18,31 @@ jQuery(document).ready(function($) {
         $('body').append(toast);
         
         // Aplica as posições configuradas
-        toast.css(positionH, '30px');
-        toast.css(positionV, '30px');
+        if (positionH === 'center') {
+            toast.css({
+                'left': '50%',
+                'right': 'auto',
+                'transform': 'translateX(-50%)'
+            });
+        } else {
+            toast.css(positionH, '30px');
+            // Remove a posição oposta
+            if (positionH === 'right') toast.css('left', 'auto');
+            else toast.css('right', 'auto');
+        }
         
-        // Remove as posições opostas
-        if (positionH === 'right') toast.css('left', 'auto');
-        else toast.css('right', 'auto');
-        
-        if (positionV === 'bottom') toast.css('top', 'auto');
-        else toast.css('bottom', 'auto');
+        if (positionV === 'center') {
+            toast.css({
+                'top': '50%',
+                'bottom': 'auto',
+                'transform': positionH === 'center' ? 'translate(-50%, -50%)' : 'translateY(-50%)'
+            });
+        } else {
+            toast.css(positionV, '30px');
+            // Remove a posição oposta
+            if (positionV === 'bottom') toast.css('top', 'auto');
+            else toast.css('bottom', 'auto');
+        }
 
         // Fecha o toast ao clicar no botão
         toast.find('.custom-discount-toast-close').on('click', function() {
